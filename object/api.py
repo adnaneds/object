@@ -21,9 +21,14 @@ To start populating this file, take a look at the docs [1] and at a canonical ex
 [2]: https://github.com/deephdc/demo_app
 """
 
+
 from functools import wraps
+import shutil
+import tempfile
 
 from aiohttp.web import HTTPBadRequest
+from webargs import fields, validate
+
 
 
 def _catch_error(f):
@@ -38,6 +43,62 @@ def _catch_error(f):
         except Exception as e:
             raise HTTPBadRequest(reason=e)
     return wrap
+
+
+
+def get_predict_args():
+    """
+    Input fields for the user.
+    """
+    arg_dict = {
+        "demo-image": fields.Field(
+            required=False,
+            type="file",
+            location="form",
+            description="image",  # needed to be parsed by UI
+        ),
+        # Add format type of the response of predict()
+        # For demo purposes, we allow the user to receive back
+        # either an image or a zip containing an image.
+        # More options for MIME types: https://mimeapplication.net/
+        "accept": fields.Str(
+            description="Media type(s) that is/are acceptable for the response.",
+            validate=validate.OneOf(["image/*", "application/zip"]),
+        ),
+    }
+    return arg_dict
+
+
+@_catch_error
+def predict(**kwargs):
+    """
+    Return same inputs as provided.
+    """
+    filepath = kwargs['demo-image'].filename
+
+    # Return the image directly
+    if kwargs['accept'] == 'image/*':
+        return open(filepath, 'rb')
+
+    # Return a zip
+    elif kwargs['accept'] == 'application/zip':
+
+        zip_dir = tempfile.TemporaryDirectory()
+
+        # Add original image to output zip
+        shutil.copyfile(filepath,
+                        zip_dir.name + '/demo.png')
+
+        # Add for example a demo txt file
+        with open(f'{zip_dir.name}/demo.txt', 'w') as f:
+            f.write('Add here any additional information!')
+
+        # Pack dir into zip and return it
+        shutil.make_archive(zip_dir.name, format='zip', root_dir=zip_dir.name)
+        zip_path = zip_dir.name + '.zip'
+
+        return open(zip_path, 'rb')
+
 
 
 # def get_metadata():
