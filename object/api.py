@@ -75,10 +75,15 @@ def predict(**kwargs):
     Return same inputs as provided.
     """
     filepath = kwargs['demo-image'].filename
+    #filepath2 = kwargs['demo-image']
 
     # Return the image directly
     if kwargs['accept'] == 'image/*':
-        return open(filepath, 'rb')
+        #return open(filepath, 'rb')
+        return kwargs
+
+
+
 
     # Return a zip
     elif kwargs['accept'] == 'application/zip':
