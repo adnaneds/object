@@ -79,8 +79,9 @@ def predict(**kwargs):
 
     # Return the image directly
     if kwargs['accept'] == 'image/*':
-        #return open(filepath, 'rb')
-        return kwargs
+        
+        return open(filepath, 'rb')
+        
 
 
 
